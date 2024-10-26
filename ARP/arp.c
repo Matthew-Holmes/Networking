@@ -72,6 +72,19 @@ int main()
         exit(1);
     }
 
+
+    strcpy(ifr.ifr_name,"enp8s0");
+    /* retrieve ethernet interface index*/
+    if (ioctl(sd, SIOCGIFINDEX, &ifr) == -1)
+    {
+        perror("couldn't find ethernet interface index");
+        close(sd);
+        exit(1);
+    }
+
+
+
+
     close(sd);
 
 
