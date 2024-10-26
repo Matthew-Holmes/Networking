@@ -81,10 +81,23 @@ int main()
         close(sd);
         exit(1);
     }
+    ifindex = ifr.ifr_ifindex;
+    printf("interface index is %d\n", ifindex);
+    
+    /* retrieve corresponding MAC*/
+    if (ioctl(sd, SIOCGIFHWADDR, &ifr) == -1)
+    {
+        perror("finding MAC address failed");
+        close(sd);
+        exit(1);
+    }
+    /* print the MAC address */
+    unsigned char *hwaddr = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+    printf("MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n",
+        hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 
 
-
-
+        
     close(sd);
 
 
