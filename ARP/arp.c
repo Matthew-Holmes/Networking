@@ -64,6 +64,7 @@ int main()
     memset(buffer,0x00,60);
     /*open socket*/
     // WARNING - this won't run on windows subsystem for linux!
+    // WARNING - need sudo to run this
     sd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sd == -1)
     {
