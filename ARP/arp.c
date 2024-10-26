@@ -37,7 +37,7 @@ struct arp_header
     unsigned short opcode;
     unsigned char sender_mac[MAC_LENGTH];
     unsigned char sender_ip[IPV4_LENGTH];
-    unsigned char target_max[MAC_LENGTH];
+    unsigned char target_mac[MAC_LENGTH];
     unsigned char target_ip[IPV4_LENGTH];
 };
 
@@ -97,6 +97,20 @@ int main()
         hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5]);
 
 
+    // form the ARP request
+    for (index = 0; index < 6; index++)
+    {
+        send_req->h_dest[index] = (unsigned char)0xff;
+        arp_req->target_mac[index] = (unsigned char)0x00;
+        /* filling the source MAC address in the header */
+        send_req->h_source[index] = (unsigned char)ifr.ifr_hwaddr.sa_data[index];
+        arp_req->sender_mac[index] = (unsigned char)ifr.ifr_hwaddr.sa_data[index];
+        socket_address.sll_addr[index] = (unsigned char)ifr.ifr_hwaddr.sa_data[index];
+    }
+
+
+    /* prepare sockaddr_ll*/
+    
         
     close(sd);
 
