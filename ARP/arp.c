@@ -4,6 +4,8 @@
 
 #include <asm/types.h>
 
+#include <arpa/inet.h>
+
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -44,6 +46,38 @@ struct arp_header
 //https://stackoverflow.com/questions/16710040/arp-request-and-reply-using-c-socket-programming
 int main()
 {
-    printf("Hello world\n");
+
+    int sd;
+    unsigned char buffer[BUF_SIZE];
+    unsigned char source_ip[4] = {192,168,1,57};
+    unsigned char target_ip[4] = {192,168,1,57};
+    struct ifreq ifr; // to hold interface request data
+    // cast start of buffer to the ethernet header pointer fo sending and recieving frames
+    struct ethhdr *send_req = (struct ethhdr *)buffer;
+    struct ethhdr *rcv_resp = (struct ethhdr *)buffer;
+    // cast a position in the buffer just past the ethernet header to the ARP header pointer
+    struct arp_header *arp_req = (struct arp_header *)(buffer+ETH2_HEADER_LEN);
+    struct arp_header *arp_resp = (struct arp_header *)(buffer+ETH2_HEADER_LEN);
+    struct sockaddr_ll socket_address; // holds the low-level socket address
+    int index,ret,length=0,ifindex; // length tracks frame length
+
+    memset(buffer,0x00,60);
+    /*open socket*/
+    // WARNING - this won't run on windows subsystem for linux!
+    sd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    if (sd == -1)
+    {
+        perror("socket creation failed\n");
+        exit(1);
+    }
+
+    close(sd);
+
+
+
+
+
+
+
     return 0;
 }
