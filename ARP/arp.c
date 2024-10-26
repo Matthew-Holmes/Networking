@@ -69,7 +69,7 @@ int main()
     if (sd == -1)
     {
         perror("socket creation failed\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
@@ -89,8 +89,10 @@ int main()
     {
         perror("finding MAC address failed");
         close(sd);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
+    close(sd);
+
     /* print the MAC address */
     unsigned char *hwaddr = (unsigned char *)ifr.ifr_hwaddr.sa_data;
     printf("MAC address: %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -110,6 +112,46 @@ int main()
 
 
     /* prepare sockaddr_ll*/
+    socket_address.sll_family = AF_PACKET;
+    socket_address.sll_protocol = htons(ETH_P_ARP);
+    socket_address.sll_ifindex = ifindex;
+    socket_address.sll_hatype = htons(ARPHRD_ETHER);
+    socket_address.sll_pkttype = (PACKET_BROADCAST);
+    socket_address.sll_halen = MAC_LENGTH;
+    socket_address.sll_addr[6] = 0x00;
+    socket_address.sll_addr[7] = 0x00; 
+
+    /* setting protocol of the packet*/
+    send_req->h_proto = htons(ETH_P_ARP);
+
+    /* creating the ARP request*/
+    arp_req->hardware_type = htons(HW_TYPE);
+    arp_req->protocol_type = htons(ETH_P_IP);
+    arp_req->hardware_len = MAC_LENGTH;
+    arp_req->protocol_len = IPV4_LENGTH;
+    arp_req->opcode = htons(ARP_REQUEST);
+
+    for (index = 0; index<5; index++)
+    {
+        arp_req->sender_ip[index] = (unsigned char)source_ip[index];
+        arp_req->target_ip[index] = (unsigned char)target_ip[index];
+    }
+
+    // submit request for a raw socket descriptor
+    if ((sd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
+    {
+        perror("failed to create a socket");
+        exit(EXIT_FAILURE);
+    }
+
+    buffer[32]=0x00;
+    ret = sendto(sd, buffer, 42, 0, (struct sockaddr*)&socket_address, sizeof(socket_address));
+    if (ret == -1)
+    {
+        perror("sending request failed");
+        close(sd);
+        exit(EXIT_FAILURE);
+    }
     
         
     close(sd);
