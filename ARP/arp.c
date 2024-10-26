@@ -153,14 +153,56 @@ int main()
         exit(EXIT_FAILURE);
     }
     
-        
+    printf("sent the ARP request\n\t");
+    for (index = 0; index < 42; index++)
+    {
+        printf("%02X ", buffer[index]);
+        if (index % 16 == 0 && index != 0)
+        {
+            printf("\n\t");
+        }
+    }
+    printf("\n\t");
+     
+
+    // wait for a reply
+    while(1)
+    {
+        length = recvfrom(sd, buffer, BUF_SIZE, 0, NULL, NULL);
+        if (length == -1)
+        {
+            perror("recvfrom failed: ");
+            close(sd);
+            exit(EXIT_FAILURE);
+        }
+        if (htons(rcv_resp->h_proto) == PROTO_ARP)
+        {
+            printf(" recieved ARP response len=%d \n", length);
+            printf(" sender IP: ");
+            for (index = 0; index < 4; index++)
+            {
+                printf("%u.", (unsigned int)arp_resp->sender_ip[index]);
+            }
+            printf("\n sender MAC:");
+            for (index = 0; index < 6; index++)
+            {
+                printf(" %02X:", arp_resp->sender_mac[index]);
+            }
+
+            printf(" receiver IP: ");
+            for (index = 0; index < 4; index++)
+            {
+                printf(" %u.", arp_resp->target_ip[index]);
+            }
+            printf("\n self MAC:");
+            for (index = 0; index < 6; index++)
+            {
+                printf(" %02X:", arp_resp->target_mac[index]);
+            }
+            printf("\n :");
+            break;
+        }
+    }
     close(sd);
-
-
-
-
-
-
-
     return 0;
 }
