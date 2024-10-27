@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <stddef.h>
 
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
@@ -39,7 +40,7 @@ struct arp_header
     unsigned char sender_ip[IPV4_LENGTH];
     unsigned char target_mac[MAC_LENGTH];
     unsigned char target_ip[IPV4_LENGTH];
-};
+}__attribute__((packed));
 
 
 
@@ -47,10 +48,23 @@ struct arp_header
 int main()
 {
 
+    // debugging
+    printf("size of arp_header: %zu bytes\n", sizeof(struct arp_header));
+    printf("offset of hardware_type: %zu\n", offsetof(struct arp_header, hardware_type));
+    printf("offset of protocol_type: %zu\n", offsetof(struct arp_header, protocol_type));
+    printf("offset of hardware_len: %zu\n", offsetof(struct arp_header, hardware_len));
+    printf("offset of protocol_len: %zu\n", offsetof(struct arp_header, protocol_len));
+    printf("offset of op_code: %zu\n", offsetof(struct arp_header, opcode));
+    printf("offset of sender_mac: %zu\n", offsetof(struct arp_header, sender_mac));
+    printf("offset of sender_ip: %zu\n", offsetof(struct arp_header, sender_ip));
+    printf("offset of target_mac: %zu\n", offsetof(struct arp_header, target_mac));
+    printf("offset of target_ip: %zu\n", offsetof(struct arp_header, target_ip));
+
+
     int sd;
     unsigned char buffer[BUF_SIZE];
-    unsigned char source_ip[4] = {192,168,1,57};
-    unsigned char target_ip[4] = {192,168,1,57};
+    unsigned char source_ip[4] = {192,168,1,58};
+    unsigned char target_ip[4] = {192,168,1,1};
     struct ifreq ifr; // to hold interface request data
     // cast start of buffer to the ethernet header pointer fo sending and recieving frames
     struct ethhdr *send_req = (struct ethhdr *)buffer;
@@ -131,7 +145,7 @@ int main()
     arp_req->protocol_len = IPV4_LENGTH;
     arp_req->opcode = htons(ARP_REQUEST);
 
-    for (index = 0; index<5; index++)
+    for (index = 0; index < 4; index++)
     {
         arp_req->sender_ip[index] = (unsigned char)source_ip[index];
         arp_req->target_ip[index] = (unsigned char)target_ip[index];
@@ -175,8 +189,15 @@ int main()
             close(sd);
             exit(EXIT_FAILURE);
         }
-        if (htons(rcv_resp->h_proto) == PROTO_ARP)
+        if (rcv_resp->h_proto == htons(ETH_P_ARP))
         {
+            if (ntohs(arp_resp->opcode) != ARP_REPLY)
+            {
+                // ignore packets that are not ARP replies
+                printf("\nignoring packet with opcode: %d\n", arp_resp->opcode);
+                continue;
+            }
+
             printf(" recieved ARP response len=%d \n", length);
             printf(" sender IP: ");
             for (index = 0; index < 4; index++)
@@ -194,7 +215,7 @@ int main()
             {
                 printf(" %u.", arp_resp->target_ip[index]);
             }
-            printf("\n self MAC:");
+            printf("\n reciever MAC:");
             for (index = 0; index < 6; index++)
             {
                 printf(" %02X:", arp_resp->target_mac[index]);
